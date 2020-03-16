@@ -30,11 +30,12 @@ def get_data():
            "deaths": None,
            "recovered": None}
 
-    """ Download"""
-    for key in urls.keys():
-        url = urls[key]
-        localname = localnames[key]
-        urllib.request.urlretrieve(url, localname)
+    if False:
+        """ Download"""
+        for key in urls.keys():
+            url = urls[key]
+            localname = localnames[key]
+            urllib.request.urlretrieve(url, localname)
 
     """ Load variables"""
     for key in dfs.keys():
@@ -82,12 +83,14 @@ def preprocess(df, combine_list, single_provinces=["Hubei"]):
 
     """ Rename rest of Mainland China"""
     df.loc[df["Country/Region"]=="Mainland China", "Country/Region"] = "Mainland China w/o Hubei"
+    df.loc[df["Country/Region"]=="China", "Country/Region"] = "China w/o Hubei"
     
     """ Reset index to region name"""
     df["label"] = df["Country/Region"]
     df.loc[pd.notna(df["Province/State"]),"label"] = df.loc[pd.notna(df["Province/State"]),:]["Province/State"]
     df.index = df["label"]
     
+    df = df.sort_index()
     """ Drop unused columns"""
     df = df.drop(['Province/State', 'Country/Region', 'Lat', 'Long', "label"], axis = 1) 
     
@@ -112,7 +115,7 @@ def compute_deaths_over_closed(dfs):
 
 def compute_active_cases(dfs):
     """
-    Function for computing deaths over colsed cases
+    Function for computing active cases
     Arguments: 
         dfs: dict of pandas DataFrames - The data
     Returns dict of pandas DataFrames with additionally the dataFrame for active_cases.
@@ -128,7 +131,7 @@ def compute_active_cases(dfs):
 
 def compute_death_rate(dfs):
     """
-    Function for computing deaths over colsed cases
+    Function for computing deaths rate
     Arguments: 
         dfs: dict of pandas DataFrames - The data
     Returns dict of pandas DataFrames with additionally the dataFrame for death_rate.
@@ -142,6 +145,53 @@ def compute_death_rate(dfs):
     
     return(dfs)
 
+
+
+def compute_active_cases_reindexed(dfs):
+    """
+    Function for reindexing active cases so that the start of the epidemic is in the same time period for all countries.
+    Arguments: 
+        dfs: dict of pandas DataFrames - The data
+    Returns dict of pandas DataFrames with additionally the dataFrame for active_cases_reindexed.
+    """
+    
+    """ Prepare data frame, transpose, drop calendar index"""
+    df = dfs["active_cases"].copy()
+    df = df.T
+    df = df.reset_index(drop=True)
+
+    """ Add two time periods (Hubei is otherwise too long or starts too late) """
+    for i in range(2):
+        df.append(pd.Series(), ignore_index=True)
+    
+    len_data = len(df)
+    
+    """ Go through countries, shift start of the epidemic to the beginning of the data frame"""
+    dfcols = df.columns
+    for ccol in dfcols:
+        idx = np.argmax(np.asarray(df[ccol])>=100)
+        if idx==0 and df[ccol][0] < 100:
+            idx = len_data
+        """Denmark and South Korea have big jumps at ~ 100 cases"""
+        if ccol in ["Denmark", "Korea, South"]:
+            idx -= 1
+        """Hubei starts two time periods after start of the epidemic, most other start too early"""
+        if ccol != "Hubei":
+            replacement_0 = np.asarray(df[ccol][idx:])
+            replacement_1 = np.empty(idx)
+            replacement_1[:] = np.nan
+        else:
+            replacement_1 = np.asarray(df[ccol][:-2])
+            replacement_0 = np.empty(2)
+            replacement_0[:] = np.nan
+            
+        replacement = np.hstack((replacement_0, replacement_1))
+        df[ccol] = pd.Series(replacement)
+    
+    """ Transpose back, return"""
+    dfs["active_cases_reindexed"] = df.T
+    return(dfs)
+    
 def plot(df, row_inclusion_index, title, filename):
     """
     Function for plotting
@@ -195,7 +245,7 @@ def main():
     dfs = get_data()
     
     """ Preprocess data, combine rows for country provinces"""
-    combine_list = ["Australia", "US", "Canada", "Mainland China"]
+    combine_list = ["Australia", "US", "Canada", "Mainland China", "China"]
     for key in dfs.keys():
         dfs[key] = preprocess(df=dfs[key], combine_list=combine_list)
     
@@ -203,18 +253,21 @@ def main():
     dfs = compute_deaths_over_closed(dfs)
     dfs = compute_active_cases(dfs)
     dfs = compute_death_rate(dfs)
+    dfs = compute_active_cases_reindexed(dfs)
     
     """ Set parameters for plotting"""
-    titles = {"active_cases": "COVID-19 Active Cases", "deaths_over_closed": "COVID-19 Deaths over (deaths + recovered)", "death_rate": "COVID-19 Death rate"}
-    filenames = {"active_cases": "covid19_active.png", "deaths_over_closed": "covid19_death_over_closed.png", "death_rate": "covid19_death_rate.png"}
-    row_inclusion_index_threasholds = {"active_cases": 500, "deaths_over_closed": 500, "death_rate": 300}
+    titles = {"active_cases": "COVID-19 Active Cases", "active_cases_reindexed": "COVID-19 Active Cases (Days from Start of the Outbreak)", "deaths_over_closed": "COVID-19 Deaths over (deaths + recovered)", "death_rate": "COVID-19 Death rate"}
+    filenames = {"active_cases": "covid19_active.png", "active_cases_reindexed": "covid19_active_ri.png", "deaths_over_closed": "covid19_death_over_closed.png", "death_rate": "covid19_death_rate.png"}
+    row_inclusion_index_threasholds = {"active_cases": 770, "active_cases_reindexed": 500, "deaths_over_closed": 770, "death_rate": 770}
     row_inclusion_indices = {}
     #row_inclusion_indices.get(x) is None:
     #    row_inclusion_indices = dfs["cases"].iloc[:,-1] > x
-    
+
     """ Plot"""
     for key in row_inclusion_index_threasholds.keys():
         row_inclusion_indices[key] = dfs["cases"].iloc[:,-1] > row_inclusion_index_threasholds[key]
+        if key == "active_cases_reindexed":
+            row_inclusion_indices[key] = dfs["cases"].iloc[:,-5] > row_inclusion_index_threasholds[key]
         plot(dfs[key], row_inclusion_indices.get(key), titles[key], filenames[key])
 
 

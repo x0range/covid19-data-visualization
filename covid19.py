@@ -166,8 +166,8 @@ def compute_df_reindexed(dfs, dfname, dfname_ri=None):
 
     """ Prepare indexing data frame (from active cases), transpose, drop calendar index"""
     idf = dfs["active_cases"].copy()
-    idf = df.T
-    idf = df.reset_index(drop=True)
+    idf = idf.T
+    idf = idf.reset_index(drop=True)
 
     """ Add two time periods (Hubei is otherwise too long or starts too late) """
     for i in range(2):

@@ -276,15 +276,16 @@ def main():
     dfs = compute_active_cases(dfs)
     dfs = compute_death_rate(dfs)
     dfs = compute_df_reindexed(dfs, "active_cases")
+    dfs = compute_df_reindexed(dfs, "death_rate")
     
     """Remove 0 and 1 from rate variables"""
-    for keys in ["death_rate", "deaths_over_closed"]:
+    for keys in ["death_rate", "death_rate_reindexed", "deaths_over_closed"]:
         dfs[keys] = remove_corner_values(dfs[keys])
     
     """ Set parameters for plotting"""
-    titles = {"active_cases": "COVID-19 Active Cases", "active_cases_reindexed": "COVID-19 Active Cases (Days from the Start of the Outbreak)", "deaths_over_closed": "COVID-19 Deaths over (deaths + recovered)", "death_rate": "COVID-19 Death rate"}
-    filenames = {"active_cases": "covid19_active.png", "active_cases_reindexed": "covid19_active_ri.png", "deaths_over_closed": "covid19_death_over_closed.png", "death_rate": "covid19_death_rate.png"}
-    row_inclusion_index_threasholds = {"active_cases": 770, "active_cases_reindexed": 500, "deaths_over_closed": 770, "death_rate": 770}
+    titles = {"active_cases": "COVID-19 Active Cases", "active_cases_reindexed": "COVID-19 Active Cases (Days from the Start of the Outbreak)", "deaths_over_closed": "COVID-19 Deaths over (Deaths + Recovered)", "death_rate": "COVID-19 Death Rate", "death_rate_reindexed": "COVID-19 Death Rate (Days from the Start of the Outbreak)"}
+    filenames = {"active_cases": "covid19_active.png", "active_cases_reindexed": "covid19_active_ri.png", "deaths_over_closed": "covid19_death_over_closed.png", "death_rate": "covid19_death_rate.png", "death_rate_reindexed": "covid19_death_rate_ri.png"}
+    row_inclusion_index_threasholds = {"active_cases": 770, "active_cases_reindexed": 500, "deaths_over_closed": 770, "death_rate": 770, "death_rate_reindexed": 500}
     row_inclusion_indices = {}
     #row_inclusion_indices.get(x) is None:
     #    row_inclusion_indices = dfs["cases"].iloc[:,-1] > x
@@ -292,7 +293,7 @@ def main():
     """ Plot"""
     for key in row_inclusion_index_threasholds.keys():
         row_inclusion_indices[key] = dfs["cases"].iloc[:,-1] > row_inclusion_index_threasholds[key]
-        if key == "active_cases_reindexed":
+        if key in ["active_cases_reindexed", "death_rate_reindexed"]:
             row_inclusion_indices[key] = dfs["cases"].iloc[:,-5] > row_inclusion_index_threasholds[key]
         plot(dfs[key], row_inclusion_indices.get(key), titles[key], filenames[key])
 

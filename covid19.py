@@ -146,16 +146,21 @@ def compute_death_rate(dfs):
 
 
 
-def compute_active_cases_reindexed(dfs):
+def compute_df_reindexed(dfs, dfname, dfname_ri=None):
     """
     Function for reindexing active cases so that the start of the epidemic is in the same time period for all countries.
     Arguments: 
         dfs: dict of pandas DataFrames - The data
+        dfname: str                    - DataFrame name in dfs dict to be reindexed
+        dfname_ri: str                 - DataFrame name for reindexed values
     Returns dict of pandas DataFrames with additionally the dataFrame for active_cases_reindexed.
     """
     
+    if dfname_ri is None:
+        dfname_ri = dfname + "_reindexed"
+    
     """ Prepare data frame, transpose, drop calendar index"""
-    df = dfs["active_cases"].copy()
+    df = dfs[dfname].copy()
     df = df.T
     df = df.reset_index(drop=True)
 
@@ -188,7 +193,7 @@ def compute_active_cases_reindexed(dfs):
         df[ccol] = pd.Series(replacement)
     
     """ Transpose back, return"""
-    dfs["active_cases_reindexed"] = df.T
+    dfs[dfname_ri] = df.T
     return(dfs)
 
 def remove_corner_values(df, corner_values = [0, 1]):
@@ -264,7 +269,7 @@ def main():
     dfs = compute_deaths_over_closed(dfs)
     dfs = compute_active_cases(dfs)
     dfs = compute_death_rate(dfs)
-    dfs = compute_active_cases_reindexed(dfs)
+    dfs = compute_df_reindexed(dfs, "active_cases")
     
     """Remove 0 and 1 from rate variables"""
     for keys in ["death_rate", "deaths_over_closed"]:

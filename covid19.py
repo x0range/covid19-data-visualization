@@ -164,17 +164,23 @@ def compute_df_reindexed(dfs, dfname, dfname_ri=None):
     df = df.T
     df = df.reset_index(drop=True)
 
+    """ Prepare indexing data frame (from active cases), transpose, drop calendar index"""
+    idf = dfs["active_cases"].copy()
+    idf = df.T
+    idf = df.reset_index(drop=True)
+
     """ Add two time periods (Hubei is otherwise too long or starts too late) """
     for i in range(2):
         df.append(pd.Series(), ignore_index=True)
+        idf.append(pd.Series(), ignore_index=True)
     
     len_data = len(df)
     
     """ Go through countries, shift start of the epidemic to the beginning of the data frame"""
     dfcols = df.columns
     for ccol in dfcols:
-        idx = np.argmax(np.asarray(df[ccol])>=100)
-        if idx==0 and df[ccol][0] < 100:
+        idx = np.argmax(np.asarray(idf[ccol])>=100)
+        if idx==0 and idf[ccol][0] < 100:
             idx = len_data
         """Denmark and South Korea have big jumps at ~ 100 cases"""
         if ccol in ["Denmark", "Korea, South"]:

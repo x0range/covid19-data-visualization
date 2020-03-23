@@ -201,7 +201,7 @@ def remove_corner_values(df, corner_values = [0, 1]):
     Returns: pandas DataFrame"""
     for cv in corner_values:
         df = df.mask(df==cv)
-    return cv
+    return df
 
 def plot(df, row_inclusion_index, title, filename):
     """

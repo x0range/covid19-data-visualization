@@ -30,12 +30,11 @@ def get_data():
            "deaths": None,
            "recovered": None}
 
-    if False:
-        """ Download"""
-        for key in urls.keys():
-            url = urls[key]
-            localname = localnames[key]
-            urllib.request.urlretrieve(url, localname)
+    """ Download"""
+    for key in urls.keys():
+        url = urls[key]
+        localname = localnames[key]
+        urllib.request.urlretrieve(url, localname)
 
     """ Load variables"""
     for key in dfs.keys():
@@ -256,7 +255,7 @@ def main():
     dfs = compute_active_cases_reindexed(dfs)
     
     """ Set parameters for plotting"""
-    titles = {"active_cases": "COVID-19 Active Cases", "active_cases_reindexed": "COVID-19 Active Cases (Days from Start of the Outbreak)", "deaths_over_closed": "COVID-19 Deaths over (deaths + recovered)", "death_rate": "COVID-19 Death rate"}
+    titles = {"active_cases": "COVID-19 Active Cases", "active_cases_reindexed": "COVID-19 Active Cases (Days from the Start of the Outbreak)", "deaths_over_closed": "COVID-19 Deaths over (deaths + recovered)", "death_rate": "COVID-19 Death rate"}
     filenames = {"active_cases": "covid19_active.png", "active_cases_reindexed": "covid19_active_ri.png", "deaths_over_closed": "covid19_death_over_closed.png", "death_rate": "covid19_death_rate.png"}
     row_inclusion_index_threasholds = {"active_cases": 770, "active_cases_reindexed": 500, "deaths_over_closed": 770, "death_rate": 770}
     row_inclusion_indices = {}

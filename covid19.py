@@ -190,7 +190,19 @@ def compute_active_cases_reindexed(dfs):
     """ Transpose back, return"""
     dfs["active_cases_reindexed"] = df.T
     return(dfs)
-    
+
+def remove_corner_values(df, corner_values = [0, 1]):
+    """ 
+    Function to replace a set of corner values (default: 0, 1) from a data frame. This allows i.a. for
+    less confusing plots.
+    Arguments:
+        df: pandas DataFrame            - Data
+        corner_values: list of numeric  - The values to be replaced by np.nan
+    Returns: pandas DataFrame"""
+    for cv in corner_values:
+        df = df.mask(df==cv)
+    return cv
+
 def plot(df, row_inclusion_index, title, filename):
     """
     Function for plotting
@@ -253,6 +265,10 @@ def main():
     dfs = compute_active_cases(dfs)
     dfs = compute_death_rate(dfs)
     dfs = compute_active_cases_reindexed(dfs)
+    
+    """Remove 0 and 1 from rate variables"""
+    for keys in ["death_rate", "deaths_over_closed"]:
+        dfs[keys] = remove_corner_values(dfs[keys])
     
     """ Set parameters for plotting"""
     titles = {"active_cases": "COVID-19 Active Cases", "active_cases_reindexed": "COVID-19 Active Cases (Days from the Start of the Outbreak)", "deaths_over_closed": "COVID-19 Deaths over (deaths + recovered)", "death_rate": "COVID-19 Death rate"}

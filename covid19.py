@@ -148,7 +148,7 @@ def compute_death_rate(dfs):
 
 def compute_df_reindexed(dfs, dfname, dfname_ri=None):
     """
-    Function for reindexing active cases so that the start of the epidemic is in the same time period for all countries.
+    Function for reindexing data so that the start of the epidemic is in the same time period for all countries.
     Arguments: 
         dfs: dict of pandas DataFrames - The data
         dfname: str                    - DataFrame name in dfs dict to be reindexed
